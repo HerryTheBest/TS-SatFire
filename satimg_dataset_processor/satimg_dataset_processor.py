@@ -14,7 +14,7 @@ class AFBADatasetProcessor(SatProcessingUtils):
         stack_label_over_locations = []
         n_channels = 8
         if not os.path.exists(save_path):
-            os.mkdir(save_path)
+            os.makedirs(save_path)
         for location in locations:
             print(location)
             study_area_path = data_path + '/' + location + '/' + satellite_day + '/'
@@ -141,7 +141,7 @@ class PredDatasetProcessor(SatProcessingUtils):
         stack_label_over_locations = []
         n_channels = 8+19
         if not os.path.exists(save_path):
-            os.mkdir(save_path)
+            os.makedirs(save_path)
         for location in locations:
             print(location)
             data_day_path = data_path + location + '/' + satellite_day + '/'
@@ -259,7 +259,7 @@ class AFTestDatasetProcessor(SatProcessingUtils):
         ts_length = 10
         n_channels = 8
         if not os.path.exists(save_path):
-            os.mkdir(save_path)
+            os.makedirs(save_path)
         print(location)
         data_path = 'data/' + location + '/' + satellite + '/'
         file_list = glob(data_path + '/*.tif')
@@ -379,7 +379,7 @@ class AFTestDatasetProcessor(SatProcessingUtils):
                 th_i= th[location]
                 th_n = th_night[location]
                 if not os.path.exists(f'{save_path}_figure'):
-                    os.mkdir(f'{save_path}_figure')
+                    os.makedirs(f'{save_path}_figure')
                 af = np.zeros(array_day[3, :, :].shape)
                 af[:, :] = np.logical_or(array_day[3, :, :] > th_i[i][0], array_day[4, :, :] > th_i[i][1])
                 af_img = af
