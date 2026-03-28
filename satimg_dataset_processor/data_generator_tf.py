@@ -6,7 +6,7 @@ class FireDataGenerator(tf.keras.utils.Sequence):
     def __init__(self, mode, train_test, ts_length=6, interval=3, batch_size=512, input_shape=(6, 8), n_channels=8,
                  n_classes=2, shuffle=True):
         # 'Initialization"
-        root_path = '/home/lsturaro/github/TS-SatFire/dataset/'
+        root_path = './TS-SatFire/dataset/'
         if train_test in ['train', 'val']:
             img_path = os.path.join(root_path, f'dataset_{train_test}/{mode}_{train_test}_img_seqtoseq_l{ts_length}_w1.npy')
             label_path = os.path.join(root_path, f'dataset_{train_test}/{mode}_{train_test}_label_seqtoseq_l{ts_length}_w1.npy')

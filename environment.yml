@@ -491,4 +491,4 @@ dependencies:
       - python-daemon==3.1.0
       - simple-file-checksum==1.2.2
       - sqlalchemy-jsonfield==1.0.2
-prefix: /geoinfo_vol1/home/lsturaro/github/miniforge3-clean/envs/ts-satfire
+prefix: /geoinfo_vol1./miniforge3-clean/envs/ts-satfire
