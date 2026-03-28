@@ -216,7 +216,7 @@ if not train:
 
         # Save top N epoches. 
         if (len(best_checkpoints) < top_n_checkpoints or val_loss < best_checkpoints[0][0]) and epoch>=50:
-            save_path = f"saved_models/model_{model_name}_run_{run}_seed_{SEED}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{epoch + 1}_nc_{n_channel}_ts_{ts_length}_attention_{attn_version}_seed_{SEED}.pth"
+            save_path = f"./saved_models/model_{model_name}_run_{run}_seed_{SEED}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{epoch + 1}_nc_{n_channel}_ts_{ts_length}_attention_{attn_version}_seed_{SEED}.pth"
 
             if len(best_checkpoints) == top_n_checkpoints:
                 _, remove_checkpoint = heapq.heappop(best_checkpoints)

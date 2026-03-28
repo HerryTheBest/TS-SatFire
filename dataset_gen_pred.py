@@ -48,7 +48,7 @@ if __name__ == '__main__':
         satimg_processor.pred_dataset_generator_seqtoseq(mode=modes, locations=locations, visualize=False, data_path='/home/lsturaro/github/TS-SatFire/ts-satfire',
                                                 file_name=usecase+'_'+modes+'_img_seqtoseq_alll_'+str(ts_length)+'i_'+str(interval)+'.npy',
                                                 label_name=usecase+'_'+modes+'_label_seqtoseq_alll_'+str(ts_length)+'i_'+str(interval)+'.npy',
-                                                save_path = 'dataset/dataset_'+modes, ts_length=ts_length, 
+                                                save_path = './dataset/dataset_'+modes, ts_length=ts_length, 
                                                 interval=interval, image_size=(256, 256))
     else:
         for i, id in enumerate(locations):
