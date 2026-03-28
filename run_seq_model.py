@@ -24,8 +24,8 @@ from temporal_models.gru.gru_model import GRUModel
 from temporal_models.lstm.lstm_model import LSTMModel
 from temporal_models.t4fire import t4fire
 from sklearn.metrics import f1_score, jaccard_score
-root_path = '/home/z/h/zhao2/TS-SatFire/dataset/'
-save_path = '/home/z/h/zhao2/TS-SatFire/checkpoints/'
+root_path = '/home/lsturaro/github/TS-SatFire/dataset/'
+save_path = '/home/lsturaro/github/TS-SatFire/checkpoints/'
 
 MAX_EPOCHS = 50
 def wandb_config(model_name, run, num_heads, num_layers, mlp_dim, hidden_size):

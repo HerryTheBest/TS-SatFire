@@ -89,7 +89,7 @@ class FireDataset(Dataset):
         return x, y
 
 if __name__ == '__main__':
-    root_path = '/home/z/h/zhao2/TS-SatFire/dataset/'
+    root_path = '/home/lsturaro/github/TS-SatFire/dataset/'
     mode = 'ba'
     interval = 3
     ts_length = 6

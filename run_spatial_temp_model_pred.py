@@ -84,7 +84,7 @@ if __name__=='__main__':
     train = args.binary_flag
     target_is_single_day = True
         
-    root_dir = "/home/z/h/zhao2/TS-SatFire/"
+    root_dir = "/home/lsturaro/github/TS-SatFire/"
     wandb_user_name = "zhaoyutim"
     root_path = f"{root_dir}/dataset/"
    

@@ -55,7 +55,7 @@ if __name__ == '__main__':
     
     satimg_processor = AFBADatasetProcessor()
     if modes == 'train' or modes == 'val':
-        satimg_processor.dataset_generator_seqtoseq(mode=modes, usecase=usecase, data_path='/home/z/h/zhao2/CalFireMonitoring/data/', locations=locations, visualize=False, 
+        satimg_processor.dataset_generator_seqtoseq(mode=modes, usecase=usecase, data_path='/home/lsturaro/github/TS-SatFire/ts-satfire', locations=locations, visualize=False, 
                                                     file_name=usecase+'_'+modes+'_img_seqtoseq_alll_'+str(ts_length)+'i_'+str(interval)+'.npy',
                                                     label_name=usecase+'_'+modes+'_label_seqtoseq_alll_'+str(ts_length)+'i_'+str(interval)+'.npy',
                                                     save_path = 'dataset/dataset_'+modes, ts_length=ts_length, 
@@ -63,9 +63,9 @@ if __name__ == '__main__':
     else:  
         for id in locations:
             if usecase == 'ba':
-                satimg_processor.dataset_generator_seqtoseq(mode = 'test', usecase=usecase, data_path='/home/z/h/zhao2/CalFireMonitoring/data/', locations=[id], visualize=False, file_name=usecase+'_'+id+'_img_seqtoseql_'+str(ts_length)+'i_'+str(interval)+'.npy', label_name=usecase+'_'+id+'_label_seqtoseql_'+str(ts_length)+'i_'+str(interval)+'.npy',
+                satimg_processor.dataset_generator_seqtoseq(mode = 'test', usecase=usecase, data_path='/home/lsturaro/github/TS-SatFire/ts-satfire', locations=[id], visualize=False, file_name=usecase+'_'+id+'_img_seqtoseql_'+str(ts_length)+'i_'+str(interval)+'.npy', label_name=usecase+'_'+id+'_label_seqtoseql_'+str(ts_length)+'i_'+str(interval)+'.npy',
                                                         save_path='dataset/dataset_test', ts_length=ts_length, interval=interval, rs_idx=0.3, cs_idx=0.3, image_size=(256, 256))
             else:
                 af_test_processor = AFTestDatasetProcessor()
                 af_test_processor.af_test_dataset_generator(id, save_path='dataset/dataset_test', file_name ='af_' + id + '_img.npy')
-                af_test_processor.af_seq_tokenizing_and_test_slicing(location=id, modes=modes, ts_length=ts_length, interval=interval, usecase=usecase, root_path='/home/z/h/zhao2/TS-SatFire/dataset', save_path='/home/z/h/zhao2/TS-SatFire/dataset')
+                af_test_processor.af_seq_tokenizing_and_test_slicing(location=id, modes=modes, ts_length=ts_length, interval=interval, usecase=usecase, root_path='/home/lsturaro/github/TS-SatFire/dataset', save_path='/home/lsturaro/github/TS-SatFire/dataset')
