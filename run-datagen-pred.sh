@@ -2,15 +2,14 @@
 #SBATCH --job-name=ts_satfire
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=s320062@studenti.polito.it
-#SBATCH --gres=gpu:1
 #SBATCH --nodes=1
 #SBATCH --output=ts_satfire_%j.log
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=16
-#SBATCH --mem=32G
+#SBATCH --cpus-per-task=24
+#SBATCH --mem=64G
 #SBATCH --time=0-12:00:00
-#SBATCH --partition=gpu_a100
+#SBATCH --partition=cpu_sapphire
 
 
 module purge

@@ -132,7 +132,7 @@ class FireDataset(Dataset):
         return x, y
 
 if __name__ == '__main__':
-    root_path = './TS-SatFire/dataset/'
+    root_path = './dataset/'
     mode = 'ba'
     interval = 3
     ts_length = 6

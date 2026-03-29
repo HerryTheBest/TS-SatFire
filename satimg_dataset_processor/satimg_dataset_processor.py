@@ -435,7 +435,7 @@ class AFTestDatasetProcessor(SatProcessingUtils):
             tokenized_label = tokenized_label[..., 2]
         else:
             root_path = './CalFireMonitoring/data_train_proj2'
-            save_path = './TS-SatFire/dataset/dataset_test'
+            save_path = './dataset/dataset_test'
             tokenized_array = np.load(os.path.join(root_path, f'af_{location}_img.npy')).transpose((0, 3, 4, 1, 2))
             tokenized_label = np.load(os.path.join(root_path, f'af_{location}_label.npy')).transpose((0, 2, 3, 1))
         if tokenized_array.shape[-2]>=ts_length:

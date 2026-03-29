@@ -45,7 +45,7 @@ if __name__ == '__main__':
     usecase='pred'
     satimg_processor = PredDatasetProcessor()
     if modes in ['train', 'val']:
-        satimg_processor.pred_dataset_generator_seqtoseq(mode=modes, locations=locations, visualize=False, data_path='./TS-SatFire/ts-satfire/',
+        satimg_processor.pred_dataset_generator_seqtoseq(mode=modes, locations=locations, visualize=False, data_path='./ts-satfire/',
                                                 file_name=usecase+'_'+modes+'_img_seqtoseq_alll_'+str(ts_length)+'i_'+str(interval)+'.npy',
                                                 label_name=usecase+'_'+modes+'_label_seqtoseq_alll_'+str(ts_length)+'i_'+str(interval)+'.npy',
                                                 save_path = './dataset/dataset_'+modes, ts_length=ts_length, 
@@ -53,5 +53,5 @@ if __name__ == '__main__':
     else:
         for i, id in enumerate(locations):
             print(id)
-            satimg_processor.pred_dataset_generator_seqtoseq(mode = 'test', locations=[id], visualize=False, data_path='./TS-SatFire/ts-satfire/',file_name=usecase+'_'+id+'_img_seqtoseql_'+str(ts_length)+'i_'+str(interval)+'.npy', label_name=usecase+'_'+id+'_label_seqtoseql_'+str(ts_length)+'i_'+str(interval)+'.npy',
+            satimg_processor.pred_dataset_generator_seqtoseq(mode = 'test', locations=[id], visualize=False, data_path='./ts-satfire/',file_name=usecase+'_'+id+'_img_seqtoseql_'+str(ts_length)+'i_'+str(interval)+'.npy', label_name=usecase+'_'+id+'_label_seqtoseql_'+str(ts_length)+'i_'+str(interval)+'.npy',
                                                            save_path='dataset/dataset_test', ts_length=ts_length, interval=interval, rs_idx=0.3, cs_idx=0.3, image_size=(256, 256), label_sel=test_label_sel[i])

@@ -23,7 +23,7 @@ from satimg_dataset_processor.data_generator_torch import Normalize, FireDataset
 from sklearn.metrics import f1_score, jaccard_score
 import pandas as pd
 
-root_path = './TS-SatFire/dataset/'
+root_path = './dataset/'
 
 def wandb_config(model_name, num_heads, hidden_size, batch_size):
     wandb.login()
