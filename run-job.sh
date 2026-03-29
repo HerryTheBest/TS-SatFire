@@ -15,11 +15,23 @@
 
 module purge
 module load miniconda3/3.13.25
-cp $HOME/github/TS-SatFire/* $SCRATCH/TS-SatFire
+
+# Initialize conda for this shell session
+eval "$(conda shell.bash hook)"
+
+# Create the working directory on scratch and copy files
+mkdir -p $SCRATCH/TS-SatFire
+cp -r $HOME/github/TS-SatFire/* $SCRATCH/TS-SatFire/
 cd $SCRATCH/TS-SatFire
-conda create --name ts-satfire --file environment.yml
-conda init
-source $SCRATCH/.conda/envs/ts-satfire
-conda activate ts-satfire
+
+# Create the conda env only if it doesn't already exist
+# Use --prefix to place it on scratch, avoiding the 30-day cleanup hitting your home
+if [ ! -d "$SCRATCH/conda-envs/ts-satfire" ]; then
+    conda env create --prefix $SCRATCH/conda-envs/ts-satfire --file environment.yml
+fi
+
+conda activate $SCRATCH/conda-envs/ts-satfire
+
 python $SCRATCH/TS-SatFire/datagen_gen_pred.py -mode train -ts 3 -it 1
-rsync $SCRATCH/TS-SatFire/* $HOME/github/TS-SatFire/
+
+rsync -av $SCRATCH/TS-SatFire/* $HOME/github/TS-SatFire/
