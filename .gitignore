@@ -1,4 +1,6 @@
 .vscode
 ts-satfire/
+dataset/
 ts-satfire.zip
+ts_satfire_*
 __pycache__

@@ -380,7 +380,7 @@ dependencies:
   - python-slugify=8.0.4=pyhd8ed1ab_0
   - python-tzdata=2024.2=pyhd8ed1ab_0
   - python_abi=3.12=5_cp312
-  - pytorch=2.3.1=cpu_py312h4f03144_0
+  #- pytorch=2.3.1=cpu_py312h4f03144_0
   - pytorch-cuda=11.8=h7e8668a_6
   - pytorch-mutex=1.0=cuda
   - pytz=2024.2=pyhd8ed1ab_0
@@ -491,3 +491,4 @@ dependencies:
       - python-daemon==3.1.0
       - simple-file-checksum==1.2.2
       - sqlalchemy-jsonfield==1.0.2
+      - wandb
