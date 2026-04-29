@@ -22,18 +22,13 @@ mkdir -p $SCRATCH/TS-SatFire
 rsync -av $HOME/github/TS-SatFire/ $SCRATCH/TS-SatFire/
 cd $SCRATCH/TS-SatFire
 
-#if [ ! -d "$SCRATCH/conda-envs/ts-satfire" ]; then
-#    echo "Creating conda environment..."
-#    conda env create --prefix $SCRATCH/conda-envs/ts-satfire --file environment.yml
-#else
-#    echo "Conda environment already exists, skipping creation."
-#    #conda env update --prefix $SCRATCH/conda-envs/ts-satfire --file environment.yml --prune
-#fi
 conda activate $SCRATCH/conda-envs/ts-satfire
+export WANDB_MODE=disabled
+python run_spatial_temp_model_pred.py -m swinunetr3d -mode pred -b 8 -r 1 -lr 0.001 -nh 3 -ed 36 -nc 8 -ts 3 -it 1
 
-python run_spatial_temp_model_pred.py -m SwinUNETR -mode pred -b 8 -r 1 -lr 0.001 -nh 3 -ed 24 -nc 8 -ts 3 -it 1 -test
+#$SCRATCH/conda-envs/ts-satfire/bin/python -c "import torchvision; print('torchvision OK:', torchvision.__version__)"
+#$SCRATCH/conda-envs/ts-satfire/bin/python run_spatial_temp_model_pred.py -m SwinUNETR -mode pred -b 8 -r 1 -lr 0.001 -nh 3 -ed 24 -nc 8 -ts 3 -it 1 -test
 
-rsync -av $SCRATCH/TS-SatFire/dataset/ $HOME/github/TS-SatFire/dataset/
 
 # to run:
 # sbatch <name of this file>

@@ -29,8 +29,9 @@ else
     conda env update --prefix $SCRATCH/conda-envs/ts-satfire --file environment.yml --prune
 fi
 
-rsync -av $SCRATCH/TS-SatFire/dataset/ $HOME/github/TS-SatFire/dataset/
+echo "Verify packages versions..."
+python -c "import torch; import torchvision; import torchaudio; print(torch.__version__, torchvision.__version__, torchaudio.__version__, torch.cuda.is_available())"
 
 # to run:
-# sbatch <name of this file>
+# sbatch <name of this file> 
 # scontrol show job <the id of the job, given by previous command>

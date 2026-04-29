@@ -247,7 +247,7 @@ else:
     if mode != 'af':
         dfs=[]
         for year in ['2021']:
-            filename = '~/CalFireMonitoring/roi/us_fire_' + year + '_out_new.csv'
+            filename = '~/github/TS-SatFire/roi/us_fire_' + year + '_out_new.csv'
             df = pd.read_csv(filename)
             dfs.append(df)
         df = pd.concat(dfs, ignore_index=True)
@@ -255,7 +255,7 @@ else:
         label_sel = df['label_sel'].values.astype(int)
         # dfs=[]
         # for year in ['2023']:
-        #     filename = '~/CalFireMonitoring/roi/us_fire_' + year + '_out_small.csv'
+        #     filename = '~/TS-SatFire/roi/us_fire_' + year + '_out_small.csv'
         #     df = pd.read_csv(filename)
         #     dfs.append(df)
         # df = pd.concat(dfs, ignore_index=True)

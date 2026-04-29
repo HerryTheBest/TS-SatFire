@@ -143,7 +143,7 @@ if __name__=='__main__':
         spatial_dims=3
     )
     else:
-        raise 'not implemented'
+        raise NotImplementedError('model is not implemented, check arguments')
     
     model = nn.DataParallel(model)
     model.to(device)
@@ -272,7 +272,7 @@ if __name__=='__main__':
     if train or test_after_train:
         dfs=[]
         for year in ['2021']:
-            filename = '~/CalFireMonitoring/roi/us_fire_' + year + '_out_new.csv'
+            filename = '~/github/TS-SatFire/roi/us_fire_' + year + '_out_new.csv'
             df = pd.read_csv(filename)
             dfs.append(df)
         df = pd.concat(dfs, ignore_index=True)
