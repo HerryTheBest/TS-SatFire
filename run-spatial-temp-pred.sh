@@ -24,7 +24,7 @@ cd $SCRATCH/TS-SatFire
 
 conda activate $SCRATCH/conda-envs/ts-satfire
 export WANDB_MODE=disabled
-python run_spatial_temp_model_pred.py -m swinunetr3d -mode pred -b 8 -r 1 -lr 0.001 -nh 3 -ed 36 -nc 8 -ts 3 -it 1
+python run_spatial_temp_model_pred.py -m swinunetr3d -mode pred -b 8 -r 1 -lr 0.001 -nh 3 -ed 36 -nc 43 -ts 3 -it 1
 
 #$SCRATCH/conda-envs/ts-satfire/bin/python -c "import torchvision; print('torchvision OK:', torchvision.__version__)"
 #$SCRATCH/conda-envs/ts-satfire/bin/python run_spatial_temp_model_pred.py -m SwinUNETR -mode pred -b 8 -r 1 -lr 0.001 -nh 3 -ed 24 -nc 8 -ts 3 -it 1 -test

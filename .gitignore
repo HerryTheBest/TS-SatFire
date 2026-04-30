@@ -4,3 +4,4 @@ dataset/
 ts-satfire.zip
 ts_satfire_*
 __pycache__
+*test*

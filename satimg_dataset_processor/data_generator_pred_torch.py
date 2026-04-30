@@ -17,7 +17,10 @@ class Normalize(object):
         # todo: use tensor operations instead of loop
         for i in range(len(self.mean)):
             if i not in self.dont_normalize_idc:
-                sample[i, :, ...] = (sample[i, :, ...] - self.mean[i]) / self.std[i]
+                # AI suggested EDIT
+                #sample[i, :, ...] = (sample[i, :, ...] - self.mean[i]) / self.std[i]
+                sample[i, :, ...] = (sample[i, :, ...] - self.mean[i]) / (self.std[i] + 1e-8)
+                # end AI suggestion
         return sample
 
 class FireDataset(Dataset):
@@ -124,6 +127,9 @@ class FireDataset(Dataset):
 
         x_array, y_array = img_dataset, y_dataset
         x_array_copy = x_array.copy()
+        # AI suggested change
+        x_array_copy = np.nan_to_num(x_array_copy, nan=0.0, posinf=0.0, neginf=0.0)
+        # end AI suggestion
         # convert the data to a PyTorch tensor
         x = torch.squeeze(torch.from_numpy(x_array_copy))
         y = torch.squeeze(torch.from_numpy(y_array)).long()

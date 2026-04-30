@@ -15,7 +15,6 @@ from spatial_models.unetr.unetr import UNETR
 from spatial_models.unet import UNet
 from spatial_models.attentionunet import AttentionUnet
 from torch import nn, optim
-from torch.cuda.amp import GradScaler
 from torch.utils.data import DataLoader
 from torchinfo import summary
 from tqdm import tqdm
@@ -25,7 +24,6 @@ from sklearn.metrics import f1_score, jaccard_score
 import pandas as pd
 import matplotlib.pyplot as plt
 import pathlib
-
 
 def wandb_config(model_name, num_heads, hidden_size, batch_size, wandb_user_name):
     wandb.login()
@@ -103,6 +101,8 @@ if __name__=='__main__':
 
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if not torch.cuda.is_available():
+        print('cuda not available, using cpu')
 
     image_size = (ts_length, 256, 256)
     window_size = (ts_length, 4, 4)
@@ -147,13 +147,20 @@ if __name__=='__main__':
     
     model = nn.DataParallel(model)
     model.to(device)
-    
-    criterion = DiceLoss(include_background=True, reduction='mean', sigmoid=True)
+
+    # AI suggested EDIT
+    #criterion = DiceLoss(include_background=True, reduction='mean', sigmoid=True)
+    from monai.losses import DiceCELoss
+    criterion = DiceCELoss(include_background=True, reduction='mean', sigmoid=True, lambda_dice=1.0, lambda_ce=1.0, weight=torch.tensor([1.0, 446.7836]).to(device))
+    # end AI suggestion
     mean_iou = MeanIoU(include_background=True, reduction="mean", ignore_empty=False)
     dice_metric = DiceMetric(include_background=True, reduction="mean", ignore_empty=False)
     post_trans = Compose([Activations(sigmoid=True), AsDiscrete(threshold=0.5)])
     optimizer = optim.Adam(model.parameters(), lr=lr)
-    scaler = GradScaler()
+    scaler = torch.amp.GradScaler('cuda')
+    # AI suggested edit
+    use_amp = False
+    # end AI sugggestion
     model.to(device)
     best_checkpoints = []
     if not train:
@@ -179,10 +186,22 @@ if __name__=='__main__':
                 else:
                     outputs = model(data_batch)
                     outputs = outputs.mean(2) # time dimension
+
+                # DEBUG - add these lines temporarily
+                print(f"data_batch - min: {data_batch.min():.4f}, max: {data_batch.max():.4f}, NaN: {torch.isnan(data_batch).any()}, Inf: {torch.isinf(data_batch).any()}")
+                print(f"outputs - min: {outputs.min():.4f}, max: {outputs.max():.4f}, NaN: {torch.isnan(outputs).any()}, Inf: {torch.isinf(outputs).any()}")
+                print(f"labels - min: {labels_batch.min():.4f}, max: {labels_batch.max():.4f}, NaN: {torch.isnan(labels_batch.float()).any()}")
+
                 loss = criterion(outputs, labels_batch)
-                scaler.scale(loss).backward()
-                scaler.step(optimizer)
-                scaler.update()
+
+                print(f"loss: {loss.item()}")
+
+                # AI suggested edit
+                #scaler.scale(loss).backward()
+                #scaler.step(optimizer)
+                #scaler.update()
+                loss.backward()
+                optimizer.step()
 
                 train_loss += loss.detach().item() * data_batch.size(0)
                 train_bar.set_description(f"Epoch {epoch}/{MAX_EPOCHS}, Loss: {train_loss/((i+1)* data_batch.size(0)):.4f}")
@@ -236,8 +255,8 @@ if __name__=='__main__':
 
             # Save the top N model checkpoints based on validation loss
             if (len(best_checkpoints) < top_n_checkpoints or val_loss < best_checkpoints[0][0]): # and epoch>=150:
-                #save_path = f"saved_models/model_{model_name}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{epoch + 1}_nc_{n_channel}_ts_{ts_length}.pth"
-                save_path = f"{wandb.run.dir}/model_{model_name}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{epoch + 1}_nc_{n_channel}_ts_{ts_length}.pth"
+                save_path = f"~/github/TS-SatFire/saved_models/model_{model_name}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{epoch + 1}_nc_{n_channel}_ts_{ts_length}.pth"
+                #save_path = f"{wandb.run.dir}/model_{model_name}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{epoch + 1}_nc_{n_channel}_ts_{ts_length}.pth"
 
                 if len(best_checkpoints) == top_n_checkpoints:
                     # Remove the checkpoint with the highest validation loss
@@ -281,7 +300,7 @@ if __name__=='__main__':
         ids = ids.values.astype(str)
         
         load_epoch = 199
-        load_path = f"saved_models/model_{model_name}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{load_epoch}_nc_{n_channel}_ts_{ts_length}.pth"
+        load_path = f"~/github/TS-SatFire/saved_models/model_{model_name}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{load_epoch}_nc_{n_channel}_ts_{ts_length}.pth"
 
         checkpoint = torch.load(load_path)
         model.load_state_dict(checkpoint['model_state_dict'])
