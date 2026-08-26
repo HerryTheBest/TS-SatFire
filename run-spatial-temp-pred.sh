@@ -9,7 +9,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=24
 #SBATCH --mem=128G
-#SBATCH --time=0-06:00:00
+#SBATCH --time=0-12:00:00
 #SBATCH --partition=gpu_a40
 
 set -euo pipefail
@@ -24,11 +24,11 @@ cd $SCRATCH/TS-SatFire
 
 conda activate $SCRATCH/conda-envs/ts-satfire
 export WANDB_MODE=disabled
-python run_spatial_temp_model_pred.py -m swinunetr3d -mode pred -b 8 -r 1 -lr 0.001 -nh 3 -ed 36 -nc 43 -ts 3 -it 1
+#python run_spatial_temp_model_pred.py -m swinunetr3d -mode pred -b 8 -r 1 -lr 0.001 -nh 3 -ed 36 -nc 43 -ts 3 -it 1 -test_after_train
+#python run_spatial_temp_model_pred.py -m swinunetr3d -mode pred -b 8 -r 1 -lr 0.001 -nh 3 -ed 36 -nc 43 -ts 3 -it 1 -resume model_swinunetr3d_mode_pred_num_heads_3_hidden_size_36_batchsize_8_checkpoint_epoch_80_nc_43_ts_3.pth
+python run_spatial_temp_model_pred.py -m swinunetr3d -mode pred -b 8 -r 1 -lr 0.001 -nh 3 -ed 36 -nc 43 -ts 3 -it 1 -test
 
-#$SCRATCH/conda-envs/ts-satfire/bin/python -c "import torchvision; print('torchvision OK:', torchvision.__version__)"
-#$SCRATCH/conda-envs/ts-satfire/bin/python run_spatial_temp_model_pred.py -m SwinUNETR -mode pred -b 8 -r 1 -lr 0.001 -nh 3 -ed 24 -nc 8 -ts 3 -it 1 -test
-
+rsync -av $SCRATCH/TS-SatFire/saved_models/ $HOME/github/TS-SatFire/saved_models/
 
 # to run:
 # sbatch <name of this file>

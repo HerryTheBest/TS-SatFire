@@ -25,6 +25,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import pathlib
 
+# Added by me
+current_directory = os.getcwd()
+print(f"current_directory: {current_directory}")
+
 def wandb_config(model_name, num_heads, hidden_size, batch_size, wandb_user_name):
     wandb.login()
     # wandb.init(project="tokenized_window_size" + str(window_size) + str(model_name) + 'run' + str(run), entity="zhaoyutim")
@@ -54,10 +58,11 @@ if __name__=='__main__':
     parser.add_argument('-nc', type=int, help='n_channel')
     parser.add_argument('-ts', type=int, help='ts_length')
     parser.add_argument('-it', type=int, help='interval')
-    parser.add_argument('-test', dest='binary_flag', action='store_true', help='embedding dimension')
+    parser.add_argument('-test', action='store_true', help='run in test mode')
+    parser.add_argument('-test_after_train', action='store_true', help='run in train mode, then test after training')
     parser.add_argument('-seed', type=int, default=42)
+    parser.add_argument('-resume', type=str, default=None, help='checkpoint to resume training from')
 
-    parser.set_defaults(binary_flag=False)
     args = parser.parse_args()
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -79,7 +84,8 @@ if __name__=='__main__':
     interval = args.it
     mode = args.mode
     top_n_checkpoints = 1
-    train = args.binary_flag
+    train = not args.test
+    test_after_train = args.test_after_train
     target_is_single_day = True
         
     root_dir = "./"
@@ -88,7 +94,7 @@ if __name__=='__main__':
    
     
     # Dataloader
-    if not train:
+    if train:
         wandb_config(model_name, num_heads, hidden_size, batch_size, wandb_user_name=wandb_user_name)
         image_path = os.path.join(root_path, 'dataset_train/'+mode+'_train_img_seqtoseq_alll_'+str(ts_length)+'i_'+str(interval)+'.npy')
         label_path = os.path.join(root_path, 'dataset_train/'+mode+'_train_label_seqtoseq_alll_'+str(ts_length)+'i_'+str(interval)+'.npy')
@@ -148,7 +154,7 @@ if __name__=='__main__':
     model = nn.DataParallel(model)
     model.to(device)
 
-    # AI suggested EDIT
+    # AI suggested EDIT 
     #criterion = DiceLoss(include_background=True, reduction='mean', sigmoid=True)
     from monai.losses import DiceCELoss
     criterion = DiceCELoss(include_background=True, reduction='mean', sigmoid=True, lambda_dice=1.0, lambda_ce=1.0, weight=torch.tensor([1.0, 446.7836]).to(device))
@@ -158,14 +164,28 @@ if __name__=='__main__':
     post_trans = Compose([Activations(sigmoid=True), AsDiscrete(threshold=0.5)])
     optimizer = optim.Adam(model.parameters(), lr=lr)
     scaler = torch.amp.GradScaler('cuda')
-    # AI suggested edit
-    use_amp = False
-    # end AI sugggestion
     model.to(device)
     best_checkpoints = []
-    if not train:
+
+    # AI suggested edit 
+    start_epoch = 0
+    # Resume from checkpoint if specified
+    if args.resume is not None:
+        checkpoint_path = f"{current_directory}/saved_models/{args.resume}"
+        if os.path.exists(checkpoint_path):
+            print(f"Resuming training from checkpoint: {checkpoint_path}")
+            checkpoint = torch.load(checkpoint_path, map_location=device)
+            model.load_state_dict(checkpoint['model_state_dict'])
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            start_epoch = checkpoint['epoch'] + 1
+            print(f"Resumed from epoch {checkpoint['epoch']}, loss: {checkpoint['loss']:.4f}")
+        else:
+            raise FileNotFoundError(f"Checkpoint not found at {checkpoint_path}, starting from scratch")
+    # end AI sugggestion
+
+    if train:
         # create a progress bar for the training loop
-        for epoch in range(MAX_EPOCHS):
+        for epoch in range(start_epoch, MAX_EPOCHS):
             model.train()
             train_loss = 0.0
             train_bar = tqdm(train_dataloader, total=len(train_dataloader))
@@ -187,21 +207,11 @@ if __name__=='__main__':
                     outputs = model(data_batch)
                     outputs = outputs.mean(2) # time dimension
 
-                # DEBUG - add these lines temporarily
-                print(f"data_batch - min: {data_batch.min():.4f}, max: {data_batch.max():.4f}, NaN: {torch.isnan(data_batch).any()}, Inf: {torch.isinf(data_batch).any()}")
-                print(f"outputs - min: {outputs.min():.4f}, max: {outputs.max():.4f}, NaN: {torch.isnan(outputs).any()}, Inf: {torch.isinf(outputs).any()}")
-                print(f"labels - min: {labels_batch.min():.4f}, max: {labels_batch.max():.4f}, NaN: {torch.isnan(labels_batch.float()).any()}")
-
                 loss = criterion(outputs, labels_batch)
 
-                print(f"loss: {loss.item()}")
-
-                # AI suggested edit
-                #scaler.scale(loss).backward()
-                #scaler.step(optimizer)
-                #scaler.update()
-                loss.backward()
-                optimizer.step()
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
 
                 train_loss += loss.detach().item() * data_batch.size(0)
                 train_bar.set_description(f"Epoch {epoch}/{MAX_EPOCHS}, Loss: {train_loss/((i+1)* data_batch.size(0)):.4f}")
@@ -255,7 +265,7 @@ if __name__=='__main__':
 
             # Save the top N model checkpoints based on validation loss
             if (len(best_checkpoints) < top_n_checkpoints or val_loss < best_checkpoints[0][0]): # and epoch>=150:
-                save_path = f"~/github/TS-SatFire/saved_models/model_{model_name}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{epoch + 1}_nc_{n_channel}_ts_{ts_length}.pth"
+                save_path = f"{current_directory}/saved_models/model_{model_name}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{epoch + 1}_nc_{n_channel}_ts_{ts_length}.pth"
                 #save_path = f"{wandb.run.dir}/model_{model_name}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{epoch + 1}_nc_{n_channel}_ts_{ts_length}.pth"
 
                 if len(best_checkpoints) == top_n_checkpoints:
@@ -265,6 +275,7 @@ if __name__=='__main__':
                         os.remove(remove_checkpoint)
 
                 # Save the new checkpoint
+                print(f'saving data in: {save_path}')
                 torch.save({
                     'epoch': epoch,
                     'model_state_dict': model.state_dict(),
@@ -288,10 +299,11 @@ if __name__=='__main__':
         print("Top N best checkpoints:")
         for _, checkpoint in best_checkpoints:
             print(checkpoint)
-    if train or test_after_train:
+    
+    if not train or test_after_train:
         dfs=[]
         for year in ['2021']:
-            filename = '~/github/TS-SatFire/roi/us_fire_' + year + '_out_new.csv'
+            filename = f'{current_directory}/roi/us_fire_' + year + '_out_new.csv'
             df = pd.read_csv(filename)
             dfs.append(df)
         df = pd.concat(dfs, ignore_index=True)
@@ -299,14 +311,31 @@ if __name__=='__main__':
         ids = ids[~ids.isin(["US_2021_NV3700011641620210517"])]
         ids = ids.values.astype(str)
         
-        load_epoch = 199
-        load_path = f"~/github/TS-SatFire/saved_models/model_{model_name}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{load_epoch}_nc_{n_channel}_ts_{ts_length}.pth"
+        try:
+            checkpoints = os.listdir(f"{current_directory}/saved_models/")
+            last_checkpoint = checkpoints[len(checkpoints)-1]
+            #print(f"DEBUG: List: {checkpoints}")
+            #print(f"DEBUG: Last: {last_checkpoint}")
+            #print(f"DEBUG: epoch: {last_checkpoint[84:86]}")
+            load_path = f"{current_directory}/saved_models/{last_checkpoint}"
+            #load_epoch = 199
+            #load_path = f"{current_directory}/saved_models/model_{model_name}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{load_epoch}_nc_{n_channel}_ts_{ts_length}.pth"
+        except: 
+            raise FileNotFoundError("Can't find any saved checkpoint to test")
 
+        
+        print(f"DEBUG: Loading checkpoint from {load_path}")
         checkpoint = torch.load(load_path)
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         loaded_epoch = checkpoint['epoch']
         loaded_loss = checkpoint['loss']
+
+        # AI suggested edit
+        # # DEBUG
+        print(f"Loaded checkpoint from epoch: {loaded_epoch}")
+        print(f"Checkpoint loss: {loaded_loss:.4f}")
+        # end AI suggestion
 
         # Make sure to set the model to eval or train mode after loading
         model.eval()
@@ -345,6 +374,14 @@ if __name__=='__main__':
                     label = test_labels_batch[k, 1, ...]>0
                     label = label.numpy()
 
+                    # AI suggested edit
+                    # # DEBUG
+                    fire_pixels = label.sum()
+                    total_pixels = label.size
+                    print(f"ID {id}, batch {j}, sample {k}: fire pixels = {fire_pixels}/{total_pixels} ({100*fire_pixels/total_pixels:.2f}%)")
+                    print(f"Output unique values: {np.unique(output_stack)}")
+                    # end AI suggestion
+
                     f1_ts = f1_score(label.flatten(), output_stack.flatten(), zero_division=1.0)
                     f1 += f1_ts
                     iou_ts = jaccard_score(label.flatten(), output_stack.flatten(), zero_division=1.0)
@@ -363,9 +400,9 @@ if __name__=='__main__':
                     plt.imshow(img_fn, cmap='brg', interpolation='nearest')
                     plt.axis('off')
 
-                    dir_name = wandb.run.id
-                    if args.load_from_run_id:
-                        dir_name = args.load_from_run_id
+                    #dir_name = wandb.run.id
+                    #if args.load_from_run_id:
+                    #    dir_name = args.load_from_run_id
                     plot_dir = f'evaluation_plot'
                     pathlib.Path(plot_dir).mkdir(parents=True, exist_ok=True)
                     plot_path = 'id_{}_nhead_{}_hidden_{}_nbatch_{}_nts_{}_ts_{}_nc_{}.png'.format(id, num_heads, hidden_size, j, k, i, n_channel)
@@ -380,5 +417,5 @@ if __name__=='__main__':
             print('ID{} F1 Score of the whole TS:{}'.format(id, f1/length))
         print('model F1 Score: {} and iou score: {}'.format(f1_all/len(ids), iou_all/len(ids)))
         
-        wandb.log({"test_f1": f1_all/len(ids), "test_iou": iou_all/len(ids)})
+        #wandb.log({"test_f1": f1_all/len(ids), "test_iou": iou_all/len(ids)})
 

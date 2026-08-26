@@ -169,7 +169,9 @@ class PredDatasetProcessor(SatProcessingUtils):
             file_list_size = len(file_list)
             for i in range(0, file_list_size, interval):
                 if i + ts_length >= file_list_size:
-                    print('drop the tail')
+                    print(f'drop the tail')
+                    #print(f'DEBUG: i={i}, ts={ts_length}, list_size={file_list_size}, interval={interval}')
+                    #print(f'DEBUG: file list = {file_list}')
                     break
                 output_array = np.zeros((ts_length, n_channels, output_shape_x, output_shape_y), dtype=np.float32)
                 output_label = np.zeros((output_shape_x, output_shape_y), dtype=np.float32)
@@ -191,7 +193,9 @@ class PredDatasetProcessor(SatProcessingUtils):
                         array_night = np.zeros((2, original_shape_x, original_shape_y))
                     array_pred, _ = self.read_tiff(file.replace('VIIRS_Day', 'FirePred'))
                     img = np.concatenate((array_day[:6, offset:output_shape_x+offset, offset:output_shape_y+offset], array_night[:, offset:output_shape_x+offset, offset:output_shape_y+offset], array_pred[:, offset:output_shape_x+offset, offset:output_shape_y+offset]), axis=0)
-                    img = (img[:,:output_shape_x, :output_shape_y])
+                    # EDIT
+                    img = np.nan_to_num(img[:,:output_shape_x, :output_shape_y])
+                    # end AI suggestion
                     max_img = np.maximum(img, max_img)
                     img = np.concatenate((img[:3,...],max_img[3:5,...],img[[5],...],max_img[6:8,...],img[8:,...]))
                     ba_img = img[3,:,:]
@@ -201,11 +205,23 @@ class PredDatasetProcessor(SatProcessingUtils):
                         label = np.zeros((output_shape_x, output_shape_y))
                     af= array_day[6, :, :]
 
+                    # DEBUG - AI SUGGESTION
+                    print(f"    j={j}: raw af non-zero={( af > 0).sum()}, af min={af.min():.4f}, af max={af.max():.4f}")
+    
                     ba_img = (ba_img-ba_img.min())/(ba_img.max()-ba_img.min())
-                    label = (label[offset:output_shape_x+offset, offset:output_shape_y+offset])
-                    af = (af[offset:output_shape_x+offset, offset:output_shape_y+offset])
+                    # AI EDIT suggestion
+                    # label = (label[offset:output_shape_x+offset, offset:output_shape_y+offset])
+                    # af = (af[offset:output_shape_x+offset, offset:output_shape_y+offset])
+                    label = np.nan_to_num(label[offset:output_shape_x+offset, offset:output_shape_y+offset])
+                    af = np.nan_to_num(af[offset:output_shape_x+offset, offset:output_shape_y+offset])
+                    # end AI suggestion
+
                     ba_label = np.logical_or(label, ba_label)
                     af_acc_label = np.logical_or(af, af_acc_label)
+
+                    # DEBUG - AI SUGGESTION
+                    print(f"    j={j}: af_acc_label sum={af_acc_label.sum()}")
+
                     if label_sel==1:
                         final_label = af_acc_label
                     else:
@@ -218,7 +234,15 @@ class PredDatasetProcessor(SatProcessingUtils):
                         prev_final_label = final_label.copy()
                         output_array[j, :n_channels, :, :] = img
                     if j == ts_length:
-                        output_label[:, :] = np.where(np.logical_and(prev_final_label==0, final_label>0), 1, 0)
+                        # AI EDIT suggestion
+                        #output_label[:, :] = np.where(np.logical_and(prev_final_label==0, final_label>0), 1, 0)
+                        if label_sel == 1:
+                            current_day_fire = af > 0
+                        else:
+                            current_day_fire = np.logical_or(af > 0, label > 0)
+                        output_label[:, :] = np.where(np.logical_and(prev_final_label == 0, current_day_fire), 1, 0)
+                        print(f"DEBUG: Sequence i={i}: prev_fire={prev_final_label.sum()}, final_fire={final_label.sum()}, new_pixels={output_label.sum()}")
+                        # end AI suggestion
                     if visualize and j == ts_length:
                         plt.figure(figsize=(8, 4), dpi=80)
                         plt.subplot(121)

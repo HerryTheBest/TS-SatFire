@@ -3,7 +3,7 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=s320062@studenti.polito.it
 #SBATCH --nodes=1
-#SBATCH --output=ts_satfire_%j.log
+#SBATCH --output=ts_satfire_datagen_%j.log
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=24
@@ -21,12 +21,6 @@ mkdir -p $SCRATCH/TS-SatFire
 rsync -av $HOME/github/TS-SatFire/ $SCRATCH/TS-SatFire/
 cd $SCRATCH/TS-SatFire
 
-if [ ! -d "$SCRATCH/conda-envs/ts-satfire" ]; then
-    echo "Creating conda environment..."
-    conda env create --prefix $SCRATCH/conda-envs/ts-satfire --file environment.yml
-else
-    echo "Conda environment already exists, skipping creation."
-fi
 conda activate $SCRATCH/conda-envs/ts-satfire
 
 mkdir -p $SCRATCH/TS-SatFire/dataset/dataset_train
@@ -34,7 +28,9 @@ mkdir -p $SCRATCH/TS-SatFire/dataset/dataset_val
 mkdir -p $SCRATCH/TS-SatFire/dataset/dataset_test
 
 # the important part
-python dataset_gen_pred.py -mode test -ts 3 -it 1
+python dataset_gen_pred.py -mode train -ts 3 -it 1
+#python dataset_gen_pred.py -mode val -ts 3 -it 1
+#python dataset_gen_pred.py -mode test -ts 3 -it 1
 
 rsync -av $SCRATCH/TS-SatFire/dataset/ $HOME/github/TS-SatFire/dataset/
 

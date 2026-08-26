@@ -17,16 +17,16 @@ module purge
 module load miniconda3/3.13.25
 eval "$(conda shell.bash hook)"
 
-mkdir -p $SCRATCH/TS-SatFire
-rsync -av $HOME/github/TS-SatFire/ $SCRATCH/TS-SatFire/
-cd $SCRATCH/TS-SatFire
+mkdir -p $SCRATCH_FLASH/TS-SatFire
+rsync -av $HOME/github/TS-SatFire/ $SCRATCH_FLASH/TS-SatFire/
+cd $SCRATCH_FLASH/TS-SatFire
 
-if [ ! -d "$SCRATCH/conda-envs/ts-satfire" ]; then
+if [ ! -d "$SCRATCH_FLASH/conda-envs/ts-satfire" ]; then
     echo "Creating conda environment..."
-    conda env create --prefix $SCRATCH/conda-envs/ts-satfire --file environment.yml
+    conda env create --prefix $SCRATCH_FLASH/conda-envs/ts-satfire --file environment.yml
 else
     echo "Conda environment already exists, skipping creation."
-    conda env update --prefix $SCRATCH/conda-envs/ts-satfire --file environment.yml --prune
+    conda env update --prefix $SCRATCH_FLASH/conda-envs/ts-satfire --file environment.yml --prune
 fi
 
 echo "Verify packages versions..."
