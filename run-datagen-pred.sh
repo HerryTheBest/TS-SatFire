@@ -13,26 +13,26 @@
 
 set -euo pipefail
 
+cd $SCRATCH_FLASH/TS-SatFire
 module purge
 module load miniconda3/3.13.25
 eval "$(conda shell.bash hook)"
 
-mkdir -p $SCRATCH/TS-SatFire
-rsync -av $HOME/github/TS-SatFire/ $SCRATCH/TS-SatFire/
-cd $SCRATCH/TS-SatFire
+mkdir -p $SCRATCH_FLASH/TS-SatFire
+rsync -av $HOME/github/TS-SatFire/ $SCRATCH_FLASH/TS-SatFire/
 
-conda activate $SCRATCH/conda-envs/ts-satfire
+conda activate $SCRATCH_FLASH/conda-envs/ts-satfire
 
-mkdir -p $SCRATCH/TS-SatFire/dataset/dataset_train
-mkdir -p $SCRATCH/TS-SatFire/dataset/dataset_val
-mkdir -p $SCRATCH/TS-SatFire/dataset/dataset_test
+mkdir -p $SCRATCH_FLASH/TS-SatFire/dataset/dataset_train
+mkdir -p $SCRATCH_FLASH/TS-SatFire/dataset/dataset_val
+mkdir -p $SCRATCH_FLASH/TS-SatFire/dataset/dataset_test
 
 # the important part
-python dataset_gen_pred.py -mode train -ts 3 -it 1
+#python dataset_gen_pred.py -mode train -ts 3 -it 1
 #python dataset_gen_pred.py -mode val -ts 3 -it 1
-#python dataset_gen_pred.py -mode test -ts 3 -it 1
+python dataset_gen_pred.py -mode test -ts 3 -it 1
 
-rsync -av $SCRATCH/TS-SatFire/dataset/ $HOME/github/TS-SatFire/dataset/
+rsync -av $SCRATCH_FLASH/TS-SatFire/dataset/ $HOME/github/TS-SatFire/dataset/
 
 # to run:
 # sbatch <name of this file>

@@ -266,8 +266,7 @@ if __name__=='__main__':
             # Save the top N model checkpoints based on validation loss
             if (len(best_checkpoints) < top_n_checkpoints or val_loss < best_checkpoints[0][0]): # and epoch>=150:
                 save_path = f"{current_directory}/saved_models/model_{model_name}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{epoch + 1}_nc_{n_channel}_ts_{ts_length}.pth"
-                #save_path = f"{wandb.run.dir}/model_{model_name}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{epoch + 1}_nc_{n_channel}_ts_{ts_length}.pth"
-
+                
                 if len(best_checkpoints) == top_n_checkpoints:
                     # Remove the checkpoint with the highest validation loss
                     _, remove_checkpoint = heapq.heappop(best_checkpoints)
@@ -288,17 +287,6 @@ if __name__=='__main__':
 
                 # Ensure that the priority queue has at most N elements
                 best_checkpoints = heapq.nlargest(top_n_checkpoints, best_checkpoints)
-        if os.path.exists(save_path):
-            os.remove(save_path)
-        torch.save({
-                    'epoch': epoch,
-                    'model_state_dict': model.state_dict(),
-                    'optimizer_state_dict': optimizer.state_dict(),
-                    'loss': loss,
-                }, save_path)
-        print("Top N best checkpoints:")
-        for _, checkpoint in best_checkpoints:
-            print(checkpoint)
     
     if not train or test_after_train:
         dfs=[]
@@ -374,12 +362,16 @@ if __name__=='__main__':
                     label = test_labels_batch[k, 1, ...]>0
                     label = label.numpy()
 
-                    # AI suggested edit
-                    # # DEBUG
-                    fire_pixels = label.sum()
-                    total_pixels = label.size
-                    print(f"ID {id}, batch {j}, sample {k}: fire pixels = {fire_pixels}/{total_pixels} ({100*fire_pixels/total_pixels:.2f}%)")
-                    print(f"Output unique values: {np.unique(output_stack)}")
+                    # AI suggested DEBUG
+                    #fire_pixels = label.sum()
+                    #total_pixels = label.size
+                    #print(f"ID {id}, batch {j}, sample {k}: fire pixels = {fire_pixels}/{total_pixels} ({100*fire_pixels/total_pixels:.2f}%)")
+                    #print(f"Output unique values: {np.unique(output_stack)}")
+
+                    tp = np.logical_and(output_stack==1, label==1).sum()
+                    fp = np.logical_and(output_stack==1, label==0).sum()
+                    fn = np.logical_and(output_stack==0, label==1).sum()
+                    print(f"ID {id}, k={k}: TP={tp}, FP={fp}, FN={fn}, label_sum={label.sum()}, output_sum={output_stack.sum()}")
                     # end AI suggestion
 
                     f1_ts = f1_score(label.flatten(), output_stack.flatten(), zero_division=1.0)

@@ -204,9 +204,6 @@ class PredDatasetProcessor(SatProcessingUtils):
                     else:
                         label = np.zeros((output_shape_x, output_shape_y))
                     af= array_day[6, :, :]
-
-                    # DEBUG - AI SUGGESTION
-                    print(f"    j={j}: raw af non-zero={( af > 0).sum()}, af min={af.min():.4f}, af max={af.max():.4f}")
     
                     ba_img = (ba_img-ba_img.min())/(ba_img.max()-ba_img.min())
                     # AI EDIT suggestion
@@ -216,11 +213,14 @@ class PredDatasetProcessor(SatProcessingUtils):
                     af = np.nan_to_num(af[offset:output_shape_x+offset, offset:output_shape_y+offset])
                     # end AI suggestion
 
+                    # DEBUG - AI SUGGESTION
+                    #print(f"    j={j}: raw af non-zero={( af > 0).sum()}, af min={af.min():.4f}, af max={af.max():.4f}")
+
                     ba_label = np.logical_or(label, ba_label)
                     af_acc_label = np.logical_or(af, af_acc_label)
 
                     # DEBUG - AI SUGGESTION
-                    print(f"    j={j}: af_acc_label sum={af_acc_label.sum()}")
+                    # print(f"    j={j}: af_acc_label sum={af_acc_label.sum()}")
 
                     if label_sel==1:
                         final_label = af_acc_label
@@ -241,7 +241,7 @@ class PredDatasetProcessor(SatProcessingUtils):
                         else:
                             current_day_fire = np.logical_or(af > 0, label > 0)
                         output_label[:, :] = np.where(np.logical_and(prev_final_label == 0, current_day_fire), 1, 0)
-                        print(f"DEBUG: Sequence i={i}: prev_fire={prev_final_label.sum()}, final_fire={final_label.sum()}, new_pixels={output_label.sum()}")
+                        #print(f"DEBUG: Sequence i={i}: prev_fire={prev_final_label.sum()}, final_fire={final_label.sum()}, new_pixels={output_label.sum()}")
                         # end AI suggestion
                     if visualize and j == ts_length:
                         plt.figure(figsize=(8, 4), dpi=80)
