@@ -5,5 +5,7 @@ ts-satfire.zip
 ts_satfire_*
 __pycache__
 *test*
+run-fix-nans.sh
 saved_models/
 Results/
+hrrr_wind/

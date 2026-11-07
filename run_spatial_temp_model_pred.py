@@ -76,7 +76,7 @@ if __name__=='__main__':
 
     run = args.r
     lr = args.lr
-    MAX_EPOCHS = 100
+    MAX_EPOCHS = 300
     learning_rate = lr
     weight_decay = lr / 10
     num_classes = 2
@@ -157,7 +157,8 @@ if __name__=='__main__':
     # AI suggested EDIT 
     #criterion = DiceLoss(include_background=True, reduction='mean', sigmoid=True)
     from monai.losses import DiceCELoss
-    criterion = DiceCELoss(include_background=True, reduction='mean', sigmoid=True, lambda_dice=1.0, lambda_ce=1.0, weight=torch.tensor([1.0, 446.7836]).to(device))
+    # class balance is adjusted (from 446.7836) based on new calculations
+    criterion = DiceCELoss(include_background=True, reduction='mean', sigmoid=True, lambda_dice=1.0, lambda_ce=1.0, weight=torch.tensor([1.0, 382.7714]).to(device))
     # end AI suggestion
     mean_iou = MeanIoU(include_background=True, reduction="mean", ignore_empty=False)
     dice_metric = DiceMetric(include_background=True, reduction="mean", ignore_empty=False)
@@ -167,7 +168,6 @@ if __name__=='__main__':
     model.to(device)
     best_checkpoints = []
 
-    # AI suggested edit 
     start_epoch = 0
     # Resume from checkpoint if specified
     if args.resume is not None:
@@ -181,7 +181,14 @@ if __name__=='__main__':
             print(f"Resumed from epoch {checkpoint['epoch']}, loss: {checkpoint['loss']:.4f}")
         else:
             raise FileNotFoundError(f"Checkpoint not found at {checkpoint_path}, starting from scratch")
-    # end AI sugggestion
+
+    # scheduler and early stopping metrics
+    scheduler_plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=10)
+    scheduler_warmup = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=0.1, end_factor=1.0, total_iters=5)
+    best_val_iou = 0.0
+    patience = 50
+    epochs_without_improvement = 0
+    
 
     if train:
         # create a progress bar for the training loop
@@ -254,7 +261,7 @@ if __name__=='__main__':
                 dice_values.append(dice_metric(y_pred=outputs, y=val_labels_batch).mean().item())
 
                 val_bar.set_description(
-                    f"Epoch {epoch}/{MAX_EPOCHS}, Loss: {val_loss / ((j + 1) * val_data_batch.size(0)):.4f}")
+                    f"Epoch {epoch+1}/{MAX_EPOCHS}, Loss: {val_loss / ((j + 1) * val_data_batch.size(0)):.4f}")
 
             val_loss /= len(val_dataset)
             mean_iou_val = np.mean(iou_values)
@@ -263,9 +270,30 @@ if __name__=='__main__':
             print(f"Epoch {epoch + 1}, Validation Loss: {val_loss:.4f}, Mean IoU: {mean_iou_val:.4f}, Mean Dice: {mean_dice_val:.4f}")
 
 
+            # scheduler
+            if epoch < 5:
+                scheduler_warmup.step()
+            else:
+                scheduler_plateau.step(mean_iou_val)
+
+            # early stopping if plateau
+            if mean_iou_val > best_val_iou:
+                best_val_iou = mean_iou_val
+                epochs_without_improvement = 0
+            else:
+                epochs_without_improvement += 1
+                if epochs_without_improvement >= patience:
+                    print(f"Early stopping at epoch {epoch+1}, best IoU: {best_val_iou:.4f}")
+                    break
+
+
             # Save the top N model checkpoints based on validation loss
-            if (len(best_checkpoints) < top_n_checkpoints or val_loss < best_checkpoints[0][0]): # and epoch>=150:
-                save_path = f"{current_directory}/saved_models/model_{model_name}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{epoch + 1}_nc_{n_channel}_ts_{ts_length}.pth"
+            #if (len(best_checkpoints) < top_n_checkpoints or val_loss < best_checkpoints[0][0]):
+            #    save_path = f"{current_directory}/saved_models/model_{model_name}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{epoch + 1}_nc_{n_channel}_ts_{ts_length}.pth"
+            
+            # Save the best model checkpoints based on IoU
+            if (len(best_checkpoints) < top_n_checkpoints or mean_iou_val > best_checkpoints[0][0]):
+                save_path = f"{current_directory}/saved_models/model_{model_name}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{epoch + 1}_nc_{n_channel}_ts_{ts_length}_iouMode.pth"
                 
                 if len(best_checkpoints) == top_n_checkpoints:
                     # Remove the checkpoint with the highest validation loss
@@ -283,10 +311,12 @@ if __name__=='__main__':
                 }, save_path)
 
                 # Add the new checkpoint to the priority queue
-                heapq.heappush(best_checkpoints, (val_loss, save_path))
+                #heapq.heappush(best_checkpoints, (val_loss, save_path))
+                heapq.heappush(best_checkpoints, (mean_iou_val, save_path))
 
                 # Ensure that the priority queue has at most N elements
-                best_checkpoints = heapq.nlargest(top_n_checkpoints, best_checkpoints)
+                #best_checkpoints = heapq.nlargest(top_n_checkpoints, best_checkpoints)
+                best_checkpoints = heapq.nlargest(top_n_checkpoints, best_checkpoints, key=lambda x: x[0])
     
     if not train or test_after_train:
         dfs=[]
@@ -302,12 +332,7 @@ if __name__=='__main__':
         try:
             checkpoints = os.listdir(f"{current_directory}/saved_models/")
             last_checkpoint = checkpoints[len(checkpoints)-1]
-            #print(f"DEBUG: List: {checkpoints}")
-            #print(f"DEBUG: Last: {last_checkpoint}")
-            #print(f"DEBUG: epoch: {last_checkpoint[84:86]}")
             load_path = f"{current_directory}/saved_models/{last_checkpoint}"
-            #load_epoch = 199
-            #load_path = f"{current_directory}/saved_models/model_{model_name}_mode_{mode}_num_heads_{num_heads}_hidden_size_{hidden_size}_batchsize_{batch_size}_checkpoint_epoch_{load_epoch}_nc_{n_channel}_ts_{ts_length}.pth"
         except: 
             raise FileNotFoundError("Can't find any saved checkpoint to test")
 
@@ -319,11 +344,10 @@ if __name__=='__main__':
         loaded_epoch = checkpoint['epoch']
         loaded_loss = checkpoint['loss']
 
-        # AI suggested edit
-        # # DEBUG
+        # DEBUG
         print(f"Loaded checkpoint from epoch: {loaded_epoch}")
         print(f"Checkpoint loss: {loaded_loss:.4f}")
-        # end AI suggestion
+        
 
         # Make sure to set the model to eval or train mode after loading
         model.eval()
@@ -362,17 +386,17 @@ if __name__=='__main__':
                     label = test_labels_batch[k, 1, ...]>0
                     label = label.numpy()
 
-                    # AI suggested DEBUG
+                    # DEBUG
                     #fire_pixels = label.sum()
                     #total_pixels = label.size
                     #print(f"ID {id}, batch {j}, sample {k}: fire pixels = {fire_pixels}/{total_pixels} ({100*fire_pixels/total_pixels:.2f}%)")
                     #print(f"Output unique values: {np.unique(output_stack)}")
 
-                    tp = np.logical_and(output_stack==1, label==1).sum()
-                    fp = np.logical_and(output_stack==1, label==0).sum()
-                    fn = np.logical_and(output_stack==0, label==1).sum()
-                    print(f"ID {id}, k={k}: TP={tp}, FP={fp}, FN={fn}, label_sum={label.sum()}, output_sum={output_stack.sum()}")
-                    # end AI suggestion
+                    #tp = np.logical_and(output_stack==1, label==1).sum()
+                    #fp = np.logical_and(output_stack==1, label==0).sum()
+                    #fn = np.logical_and(output_stack==0, label==1).sum()
+                    #print(f"ID {id}, k={k}: TP={tp}, FP={fp}, FN={fn}, label_sum={label.sum()}, output_sum={output_stack.sum()}")
+                    
 
                     f1_ts = f1_score(label.flatten(), output_stack.flatten(), zero_division=1.0)
                     f1 += f1_ts

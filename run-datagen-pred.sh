@@ -28,8 +28,8 @@ mkdir -p $SCRATCH_FLASH/TS-SatFire/dataset/dataset_val
 mkdir -p $SCRATCH_FLASH/TS-SatFire/dataset/dataset_test
 
 # the important part
-#python dataset_gen_pred.py -mode train -ts 3 -it 1
-#python dataset_gen_pred.py -mode val -ts 3 -it 1
+python dataset_gen_pred.py -mode train -ts 3 -it 1
+python dataset_gen_pred.py -mode val -ts 3 -it 1
 python dataset_gen_pred.py -mode test -ts 3 -it 1
 
 rsync -av $SCRATCH_FLASH/TS-SatFire/dataset/ $HOME/github/TS-SatFire/dataset/

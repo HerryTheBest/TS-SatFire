@@ -134,6 +134,10 @@ class FireDataset(Dataset):
         # end AI suggestion
         # convert the data to a PyTorch tensor
         x = torch.squeeze(torch.from_numpy(x_array_copy))
+        # muting channels for test - REMOVE THIS TO RUN PROPERLY
+        # muted_channels = [11, 12, 23, 24] # wind speed, wind direction, forecast wind speed, forecast wind direction
+        # x[muted_channels] = 0.0
+        # REMOVE TO HERE
         y = torch.squeeze(torch.from_numpy(y_array)).long()
 
 

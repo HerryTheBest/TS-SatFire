@@ -24,8 +24,8 @@ rsync -av --exclude '*.log' $HOME/github/TS-SatFire/ $SCRATCH_FLASH/TS-SatFire/
 
 conda activate $SCRATCH_FLASH/conda-envs/ts-satfire
 export WANDB_MODE=disabled
-#python run_spatial_temp_model_pred.py -m swinunetr3d -mode pred -b 8 -r 1 -lr 0.001 -nh 3 -ed 36 -nc 43 -ts 3 -it 1 -test_after_train
-python run_spatial_temp_model_pred.py -m swinunetr3d -mode pred -b 8 -r 1 -lr 0.001 -nh 3 -ed 36 -nc 43 -ts 3 -it 1 -resume model_swinunetr3d_mode_pred_num_heads_3_hidden_size_36_batchsize_8_checkpoint_epoch_85_nc_43_ts_3.pth
+python run_spatial_temp_model_pred.py -m swinunetr3d -mode pred -b 8 -r 1 -lr 0.0001 -nh 3 -ed 36 -nc 43 -ts 3 -it 1 -test_after_train
+#python run_spatial_temp_model_pred.py -m swinunetr3d -mode pred -b 8 -r 1 -lr 0.001 -nh 3 -ed 36 -nc 43 -ts 3 -it 1 -resume model_swinunetr3d_mode_pred_num_heads_3_hidden_size_36_batchsize_8_checkpoint_epoch_80_nc_43_ts_3.pth -test_after_train
 #python run_spatial_temp_model_pred.py -m swinunetr3d -mode pred -b 8 -r 1 -lr 0.001 -nh 3 -ed 36 -nc 43 -ts 3 -it 1 -test
 
 rsync -av $SCRATCH_FLASH/TS-SatFire/saved_models/ $HOME/github/TS-SatFire/saved_models/
